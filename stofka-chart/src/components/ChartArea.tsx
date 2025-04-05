@@ -1,10 +1,20 @@
 import React, { useEffect, useRef } from 'react';
-import { createChart, UTCTimestamp, CandlestickSeries } from 'lightweight-charts';
+import {
+  createChart,
+  UTCTimestamp,
+  CandlestickSeries,
+  IChartApi,
+  ISeriesApi,
+} from 'lightweight-charts';
 import ResizeObserver from 'resize-observer-polyfill';
 import './ChartArea.css';
 
 const ChartArea: React.FC = () => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  // ✅ 명시적으로 타입 지정
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -24,6 +34,8 @@ const ChartArea: React.FC = () => {
       timeScale: { timeVisible: true, secondsVisible: true },
     });
 
+    chartRef.current = chart;
+
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#e53935',
       downColor: '#2196f3',
@@ -32,19 +44,9 @@ const ChartArea: React.FC = () => {
       borderVisible: false,
     });
 
-    const now = Math.floor(Date.now() / 1000) as UTCTimestamp;
-    const mockData = Array.from({ length: 30 }).map((_, i) => {
-      const time = (now - (30 - i) * 60) as UTCTimestamp;
-      const open = 10000 + Math.random() * 100;
-      const close = open + (Math.random() - 0.5) * 50;
-      const high = Math.max(open, close) + Math.random() * 20;
-      const low = Math.min(open, close) - Math.random() * 20;
-      return { time, open, high, low, close };
-    });
+    seriesRef.current = candlestickSeries;
 
-    candlestickSeries.setData(mockData);
-
-    // ✅ 사이즈 반응형 적용
+    // ✅ 반응형 리사이징
     const resizeObserver = new ResizeObserver(() => {
       chart.applyOptions({
         width: chartContainerRef.current!.clientWidth,
@@ -52,8 +54,30 @@ const ChartArea: React.FC = () => {
     });
     resizeObserver.observe(chartContainerRef.current!);
 
+    // ✅ SSE 연결
+    const eventSource = new EventSource('http://localhost:8080/stream/candle');
+
+    eventSource.onmessage = (event) => {
+      try {
+        const { payload } = JSON.parse(event.data);
+
+        const candle = {
+          time: Math.floor(payload.timestamp / 1000) as UTCTimestamp,
+          open: payload.opening_price,
+          high: payload.high_price,
+          low: payload.low_price,
+          close: payload.trade_price,
+        };
+
+        seriesRef.current?.update(candle);
+      } catch (err) {
+        console.error('Invalid SSE data:', err);
+      }
+    };
+
     return () => {
       chart.remove();
+      eventSource.close();
       resizeObserver.disconnect();
     };
   }, []);
