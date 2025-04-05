@@ -1,46 +1,23 @@
+/* 화면 전체 사용하도록 설정 */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
+/* 기존 기본 예제용 스타일 제거 */
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  display: none;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* 불필요한 예제 스타일 제거 */
+.card, .read-the-docs {
+  display: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
+/* App 구조 */
 .app-container {
   font-family: 'Pretendard', sans-serif;
   background-color: #f8f9fc;
@@ -50,19 +27,26 @@
   flex-direction: column;
 }
 
+/* 상단 제외하고 본문 영역 꽉 채우기 */
 .main-content {
+  flex: 1;
   display: grid;
   grid-template-columns: 3fr 1fr;
-  height: 100%;
+  height: calc(100vh - 60px); /* header 높이 제외 */
 }
 
+/* 좌측 차트 영역 */
 .left-section {
-  padding: 16px;
+  padding: 0;
+  width: 100%;
   border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
 }
 
+/* 우측 코인 리스트 */
 .right-section {
-  padding: 16px;
+  padding: 0;
   overflow-y: auto;
   background-color: #fff;
 }

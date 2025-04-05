@@ -1,8 +1,8 @@
 import React from 'react';
 import Header from './components/Header';
 import TickerInfo from './components/TickerInfo';
-// import ChartArea from './components/ChartArea';
-// import CoinList from './components/CoinList';
+import ChartArea from './components/ChartArea';
+import CoinList from './components/CoinLIst';
 import './App.css'
 
 function App() {
@@ -12,10 +12,10 @@ function App() {
       <main className="main-content">
         <section className="left-section">
           <TickerInfo />
-          {/* <ChartArea /> */}
+          <ChartArea />
         </section>
         <aside className="right-section">
-          {/* <CoinList /> */}
+          <CoinList />
         </aside>
       </main>
     </div>
