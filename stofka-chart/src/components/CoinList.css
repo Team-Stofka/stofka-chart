@@ -44,3 +44,7 @@
     font-weight: bold;
   }
   
+  tr.selected {
+    background-color: #eef3ff;
+  }
+  

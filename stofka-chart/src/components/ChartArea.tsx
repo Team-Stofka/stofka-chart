@@ -1,67 +1,77 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  createChart,
-  UTCTimestamp,
-  CandlestickSeries,
-  IChartApi,
-  ISeriesApi,
-} from 'lightweight-charts';
+    createChart,
+    IChartApi,
+    ISeriesApi,
+    UTCTimestamp,
+    CandlestickData,
+  } from 'lightweight-charts';
+  
 import ResizeObserver from 'resize-observer-polyfill';
 import './ChartArea.css';
 
-const ChartArea: React.FC = () => {
-  const chartContainerRef = useRef<HTMLDivElement>(null);
+interface ChartAreaProps {
+  code: string; // 선택된 종목 전달
+}
 
-  // ✅ 명시적으로 타입 지정
+const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      width: chartContainerRef.current.clientWidth,
-      height: 400,
-      layout: {
-        background: { color: '#ffffff' },
-        textColor: '#222222',
-      },
-      grid: {
-        vertLines: { color: '#eeeeee' },
-        horzLines: { color: '#eeeeee' },
-      },
-      crosshair: { mode: 0 },
-      timeScale: { timeVisible: true, secondsVisible: true },
-    });
 
+
+    // 새 차트 생성
+
+    const chart = createChart(chartContainerRef.current, {
+        width: chartContainerRef.current.clientWidth,
+        height: 400,
+        layout: {
+          background: { color: '#ffffff' },
+          textColor: '#222222',
+        },
+        grid: {
+          vertLines: { color: '#eeeeee' },
+          horzLines: { color: '#eeeeee' },
+        },
+        timeScale: {
+          timeVisible: true,
+          secondsVisible: true,
+        },
+      });
     chartRef.current = chart;
 
-    const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#e53935',
-      downColor: '#2196f3',
-      wickUpColor: '#e53935',
-      wickDownColor: '#2196f3',
-      borderVisible: false,
-    });
+    const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#e53935',
+        downColor: '#2196f3',
+        wickUpColor: '#e53935',
+        wickDownColor: '#2196f3',
+        borderVisible: false,
+      });
 
     seriesRef.current = candlestickSeries;
 
-    // ✅ 반응형 리사이징
     const resizeObserver = new ResizeObserver(() => {
       chart.applyOptions({
         width: chartContainerRef.current!.clientWidth,
       });
     });
+
     resizeObserver.observe(chartContainerRef.current!);
 
-    // ✅ SSE 연결
-    const eventSource = new EventSource('http://localhost:8080/stream/candle');
+    // ✅ 선택한 종목 기반 SSE 연결
+    const eventSource = new EventSource(`http://localhost:8080/stream/candle?code=${code}`);
 
     eventSource.onmessage = (event) => {
       try {
         const { payload } = JSON.parse(event.data);
 
-        const candle = {
+        if (payload.code !== code) return;
+
+        const candle: CandlestickData = {
           time: Math.floor(payload.timestamp / 1000) as UTCTimestamp,
           open: payload.opening_price,
           high: payload.high_price,
@@ -80,7 +90,7 @@ const ChartArea: React.FC = () => {
       eventSource.close();
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [code]); // 🔁 code가 바뀔 때마다 useEffect 다시 실행
 
   return <div ref={chartContainerRef} className="chart-container" />;
 };

@@ -1,32 +1,54 @@
-// src/components/TickerInfo.tsx
 import React from 'react';
 import './TickerInfo.css';
+import { TickerData } from '../types';
 
-const TickerInfo: React.FC = () => {
+interface Props {
+  ticker?: TickerData;
+  code: string;
+}
+
+const TickerInfo: React.FC<Props> = ({ ticker, code }) => {
+  if (!ticker) return <div className="ticker-info">로딩 중...</div>;
+
+  const isRise = ticker.change === 'RISE';
+  const isFall = ticker.change === 'FALL';
+  const priceClass = isRise ? 'up' : isFall ? 'down' : '';
+  const arrow = isRise ? '▲' : isFall ? '▼' : '-';
+
   return (
     <div className="ticker-info">
-      <div className="ticker-left">
-        <h2>비트코인 <span className="ticker-symbol">BTC/KRW</span></h2>
-        <div className="price">123,653,000<span className="unit">KRW</span></div>
-        <div className="change up">+0.20% ▲ 244,000</div>
+      {/* 종목명 + 코드 */}
+      <div className="coin-name">
+        <span className="symbol">{code.replace('KRW-', '')}</span>
+        <span className="code">{code}</span>
       </div>
 
-      <div className="ticker-right">
-        <div className="ticker-detail">
-          <span>고가</span>
-          <strong>123,988,000</strong>
+      {/* 현재가 */}
+      <div className="price-section">
+        <div className={`trade-price ${priceClass}`}>
+          {ticker.trade_price.toLocaleString()} <span className="currency">KRW</span>
         </div>
-        <div className="ticker-detail">
-          <span>저가</span>
-          <strong>122,912,000</strong>
+        <div className={`change ${priceClass}`}>
+          {`${(ticker.change_rate * 100).toFixed(2)}%`} {arrow} {ticker.change_price.toLocaleString()}
         </div>
-        <div className="ticker-detail">
-          <span>거래량(24H)</span>
-          <strong>2,212.559 BTC</strong>
+      </div>
+
+      <div className="details-section">
+        <div className="detail">
+          <span className="label">고가</span>
+          <span className="value up">{ticker.high_price.toLocaleString()}</span>
         </div>
-        <div className="ticker-detail">
-          <span>거래대금(24H)</span>
-          <strong>271,770,512,858 KRW</strong>
+        <div className="detail">
+          <span className="label">저가</span>
+          <span className="value down">{ticker.low_price.toLocaleString()}</span>
+        </div>
+        <div className="detail">
+          <span className="label">거래량(24H)</span>
+          <span className="value">{ticker.acc_trade_volume_24h.toFixed(3)} BTC</span>
+        </div>
+        <div className="detail">
+          <span className="label">거래대금(24H)</span>
+          <span className="value">{ticker.acc_trade_price_24h.toLocaleString()} KRW</span>
         </div>
       </div>
     </div>

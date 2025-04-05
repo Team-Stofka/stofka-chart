@@ -2,20 +2,13 @@ import React, { useEffect, useState } from 'react';
 import Header from './components/Header';
 import TickerInfo from './components/TickerInfo';
 import ChartArea from './components/ChartArea';
-import CoinList from './components/CoinLIst'; // 파일명 오타도 수정: CoinLIst → CoinList
+import CoinList from './components/CoinLIst';
+import { TickerData } from './types';
 import './App.css';
-
-type TickerData = {
-  code: string;
-  trade_price: number;
-  change: 'RISE' | 'FALL' | 'EVEN';
-  change_price: number;
-  change_rate: number;
-  acc_trade_price_24h: number;
-};
 
 function App() {
   const [tickers, setTickers] = useState<Map<string, TickerData>>(new Map());
+  const [selectedCoin, setSelectedCoin] = useState('KRW-BTC'); // ✅ 선택된 종목 상태
 
   useEffect(() => {
     const eventSource = new EventSource('http://localhost:8080/stream/ticker');
@@ -39,11 +32,16 @@ function App() {
       <Header />
       <main className="main-content">
         <section className="left-section">
-          <TickerInfo />
-          <ChartArea />
+          {/* ✅ selectedCoin에 해당하는 ticker만 전달 */}
+          <TickerInfo ticker={tickers.get(selectedCoin)} code={selectedCoin} />
+          <ChartArea code={selectedCoin} />
         </section>
         <aside className="right-section">
-          <CoinList tickers={tickers} /> {/* ✅ 실시간 데이터 전달 */}
+          <CoinList
+            tickers={tickers}
+            onSelect={setSelectedCoin}
+            selectedCode={selectedCoin}
+          />
         </aside>
       </main>
     </div>
