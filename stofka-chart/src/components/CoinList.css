@@ -1,36 +1,45 @@
-.coin-list {
-    padding: 16px;
-    font-size: 14px;
-  }
-  
-  .coin-list h3 {
-    margin-bottom: 12px;
-  }
-  
-  .coin-list table {
+.coin-list table {
     width: 100%;
     border-collapse: collapse;
+    font-size: 14px;
   }
   
   .coin-list th,
   .coin-list td {
-    padding: 8px;
-    text-align: left;
+    padding: 6px 8px;
     border-bottom: 1px solid #eee;
+    text-align: right;
   }
   
-  .coin-list .symbol {
-    font-size: 12px;
-    color: #888;
+  .coin-list th:first-child,
+  .coin-list td:first-child {
+    text-align: left;
+  }
+  
+  .coin-list th {
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+    color: #666;
+  }
+  
+  .arrow {
     margin-left: 4px;
+    font-size: 10px;
+    color: #aaa;
   }
   
-  .coin-list .up {
+  .arrow.active {
+    color: #000;
+    font-weight: bold;
+  }
+  
+  .up {
     color: #e53935;
     font-weight: bold;
   }
   
-  .coin-list .down {
+  .down {
     color: #2196f3;
     font-weight: bold;
   }

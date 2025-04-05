@@ -1,48 +1,102 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './CoinList.css';
 
-interface Coin {
-  name: string;
-  symbol: string;
-  price: number;
-  change: number; // + or -
-  volume: string;
+interface TickerData {
+  code: string;
+  trade_price: number;
+  change: 'RISE' | 'FALL' | 'EVEN';
+  change_price: number;
+  change_rate: number;
+  acc_trade_price_24h: number;
 }
 
-const coins: Coin[] = [
-  { name: '비트코인', symbol: 'BTC/KRW', price: 123653000, change: -0.2, volume: '271,771백만' },
-  { name: '이더리움', symbol: 'ETH/KRW', price: 2673000, change: +0.1, volume: '102,579백만' },
-  { name: '리플', symbol: 'XRP/KRW', price: 3125, change: +0.6, volume: '582,375백만' },
-  { name: '솔라나', symbol: 'SOL/KRW', price: 178200, change: -1.3, volume: '107,539백만' },
-  { name: '테더', symbol: 'USDT/KRW', price: 1474.5, change: 0, volume: '116,686백만' },
-];
+interface CoinListProps {
+  tickers: Map<string, TickerData>;
+}
 
-const CoinList: React.FC = () => {
+const CoinList: React.FC<CoinListProps> = ({ tickers }) => {
+  const [sortConfig, setSortConfig] = useState({
+    key: 'acc_trade_price_24h',
+    direction: 'desc',
+  });
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return {
+          key,
+          direction: prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      } else {
+        return { key, direction: 'desc' };
+      }
+    });
+  };
+
+  const sortedTickers = Array.from(tickers.values()).sort((a, b) => {
+    const { key, direction } = sortConfig;
+    const aValue = a[key as keyof TickerData];
+    const bValue = b[key as keyof TickerData];
+
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return direction === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return direction === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    return 0;
+  });
+
+  const renderArrow = (key: string) => {
+    if (sortConfig.key !== key) return <span className="arrow">⇅</span>;
+    return (
+      <span className="arrow active">
+        {sortConfig.direction === 'asc' ? '▲' : '▼'}
+      </span>
+    );
+  };
+
   return (
     <div className="coin-list">
-      <h3>코인 시세</h3>
       <table>
         <thead>
           <tr>
-            <th>이름</th>
-            <th>현재가</th>
-            <th>등락률</th>
-            <th>거래대금</th>
+            <th onClick={() => handleSort('code')}>
+              코인 {renderArrow('code')}
+            </th>
+            <th onClick={() => handleSort('trade_price')}>
+              현재가 {renderArrow('trade_price')}
+            </th>
+            <th onClick={() => handleSort('change_price')}>
+              전일대비 {renderArrow('change_price')}
+            </th>
+            <th onClick={() => handleSort('acc_trade_price_24h')}>
+              거래대금 {renderArrow('acc_trade_price_24h')}
+            </th>
           </tr>
         </thead>
         <tbody>
-          {coins.map((coin, index) => (
-            <tr key={index}>
-              <td>{coin.name} <span className="symbol">{coin.symbol}</span></td>
-              <td>{coin.price.toLocaleString()}</td>
-              <td className={coin.change > 0 ? 'up' : coin.change < 0 ? 'down' : ''}>
-                {coin.change > 0 && '▲ '}
-                {coin.change < 0 && '▼ '}
-                {Math.abs(coin.change).toFixed(2)}%
-              </td>
-              <td>{coin.volume}</td>
-            </tr>
-          ))}
+          {sortedTickers.map((ticker) => {
+            const isRise = ticker.change === 'RISE';
+            const isFall = ticker.change === 'FALL';
+
+            return (
+              <tr key={ticker.code}>
+                <td>{ticker.code.replace('KRW-', '')}</td>
+                <td className={isRise ? 'up' : isFall ? 'down' : ''}>
+                  {ticker.trade_price.toLocaleString()}
+                </td>
+                <td className={isRise ? 'up' : isFall ? 'down' : ''}>
+                  {(isRise ? '▲' : isFall ? '▼' : '')}{' '}
+                  {ticker.change_price.toLocaleString()} (
+                  {(ticker.change_rate * 100).toFixed(2)}%)
+                </td>
+                <td>{(ticker.acc_trade_price_24h / 1e8).toFixed(1)}억</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
