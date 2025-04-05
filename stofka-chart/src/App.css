@@ -40,3 +40,29 @@
 .read-the-docs {
   color: #888;
 }
+
+.app-container {
+  font-family: 'Pretendard', sans-serif;
+  background-color: #f8f9fc;
+  color: #1e1e1e;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  height: 100%;
+}
+
+.left-section {
+  padding: 16px;
+  border-right: 1px solid #ddd;
+}
+
+.right-section {
+  padding: 16px;
+  overflow-y: auto;
+  background-color: #fff;
+}
