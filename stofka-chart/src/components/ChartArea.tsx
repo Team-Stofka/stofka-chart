@@ -22,8 +22,6 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-
-
     // 새 차트 생성
 
     const chart = createChart(chartContainerRef.current, {
@@ -63,34 +61,38 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
     resizeObserver.observe(chartContainerRef.current!);
 
     // ✅ 선택한 종목 기반 SSE 연결
-    const eventSource = new EventSource(`http://localhost:8080/stream/candle?code=${code}`);
+    const eventSource = new EventSource(`http://localhost:9090/stream/candle?code=${code}`);
 
-    eventSource.onmessage = (event) => {
+    eventSource.addEventListener("candle-data", (event) => {
       try {
         const { payload } = JSON.parse(event.data);
-
+  
         if (payload.code !== code) return;
-
+  
         const candle: CandlestickData = {
-          time: Math.floor(payload.timestamp / 1000) as UTCTimestamp,
+          time: Math.floor(payload.timestamp / 1000) + 9 * 60 * 60 as UTCTimestamp,
           open: payload.opening_price,
           high: payload.high_price,
           low: payload.low_price,
           close: payload.trade_price,
         };
-
+  
         seriesRef.current?.update(candle);
       } catch (err) {
-        console.error('Invalid SSE data:', err);
+        console.error('[ChartArea] SSE candle-data 파싱 에러:', err);
       }
+    });
+  
+    eventSource.onerror = (err) => {
+      console.error('[ChartArea] SSE 연결 오류:', err);
     };
-
+  
     return () => {
       chart.remove();
       eventSource.close();
       resizeObserver.disconnect();
     };
-  }, [code]); // 🔁 code가 바뀔 때마다 useEffect 다시 실행
+  }, [code]);
 
   return <div ref={chartContainerRef} className="chart-container" />;
 };
