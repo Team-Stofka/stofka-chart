@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Header from './components/Header';
 import TickerInfo from './components/TickerInfo';
 import ChartArea from './components/ChartArea';
@@ -11,7 +11,7 @@ function App() {
   const [selectedCoin, setSelectedCoin] = useState('KRW-BTC'); // ✅ 선택된 종목 상태
 
   useEffect(() => {
-    const eventSource = new EventSource('http://localhost:9090/stream/ticker');
+    const eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/stream/ticker`);
   
     eventSource.addEventListener("ticker-data", (event) => {
       try {

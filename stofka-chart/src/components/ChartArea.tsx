@@ -61,7 +61,7 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
     resizeObserver.observe(chartContainerRef.current!);
 
     // ✅ 선택한 종목 기반 SSE 연결
-    const eventSource = new EventSource(`http://localhost:9090/stream/candle?code=${code}`);
+    const eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/stream/candle?code=${code}`);
 
     eventSource.addEventListener("candle-data", (event) => {
       try {
