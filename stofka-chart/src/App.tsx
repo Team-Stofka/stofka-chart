@@ -11,7 +11,7 @@ function App() {
   const [selectedCoin, setSelectedCoin] = useState('KRW-BTC'); // ✅ 선택된 종목 상태
 
   useEffect(() => {
-    const eventSource = new EventSource(`${import.meta.env.VITE_API_URL}/stream/ticker`);
+    const eventSource = new EventSource(`/stream/ticker`);
   
     eventSource.addEventListener("ticker-data", (event) => {
       try {
