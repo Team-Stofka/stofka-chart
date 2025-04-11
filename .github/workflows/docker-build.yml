@@ -46,7 +46,8 @@ jobs:
       - name: Build and push Docker image to GHCR
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./stofka-chart
+          dockerfile: ./stofka-chart/Dockerfile
           push: true
           tags: ghcr.io/team-stofka/stofka-chart:${{ steps.tag.outputs.TAG }}
 
