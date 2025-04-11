@@ -11,7 +11,7 @@ function App() {
   const [selectedCoin, setSelectedCoin] = useState('KRW-BTC'); // ✅ 선택된 종목 상태
 
   useEffect(() => {
-    const eventSource = new EventSource(`stofka.naver.com/stream/ticker`);
+    const eventSource = new EventSource(`stofka.naver.com:32242/stream/ticker`);
   
     eventSource.addEventListener("ticker-data", (event) => {
       try {
