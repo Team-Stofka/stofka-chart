@@ -5,7 +5,7 @@ run-name: ${{ github.actor }} is deploying the React app 🚀
 on:
   push:
     branches:
-      - dev
+      - feature/test
 
 jobs:
   build:
