@@ -63,15 +63,23 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
 
     resizeObserver.observe(chartContainerRef.current!);
 
-    // 4. SSE 연결 - 항상 1초봉 스트림 사용
-    const eventSource = new EventSource(`/stream/candle?code=${code}`);
+    // 4. interval에 따라 적절한 SSE 연결
+    const url = interval === '1s'
+      ? `/stream/candle?code=${code}`
+      : `/sse/connect?code=${code}`;
+
+    const eventSource = new EventSource(url);
 
     eventSource.addEventListener('candle-data', (event) => {
       try {
         const { payload } = JSON.parse(event.data);
+
         if (payload.code !== code) return;
 
-        const ts = Math.floor(payload.timestamp / 1000) + 9 * 60 * 60 as UTCTimestamp;
+        // interval이 1s가 아닌 경우, type 체크 (예: candle.1m, candle.3m ...)
+        if (interval !== '1s' && payload.type !== `candle.${interval}`) return;
+
+        const ts = Math.floor(new Date(payload.timestamp).getTime() / 1000) as UTCTimestamp;
         const candle: CandlestickData = {
           time: ts,
           open: payload.opening_price,
