@@ -27,6 +27,12 @@ const CoinList: React.FC<CoinListProps> = ({ tickers, onSelect, selectedCode }) 
   const sortedTickers = Array.from(tickers.values()).sort((a, b) => {
     const aValue = a[sortConfig.key as keyof TickerData];
     const bValue = b[sortConfig.key as keyof TickerData];
+
+    if (sortConfig.key === 'change_rate') {
+      return sortConfig.direction === 'asc'
+        ? a.change_rate - b.change_rate
+        : b.change_rate - a.change_rate;
+    }
   
     if (typeof aValue === 'number' && typeof bValue === 'number') {
       return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
@@ -47,7 +53,7 @@ const CoinList: React.FC<CoinListProps> = ({ tickers, onSelect, selectedCode }) 
           <tr>
             <th onClick={() => handleSort('code')}>코인 {renderArrow('code')}</th>
             <th onClick={() => handleSort('trade_price')}>현재가 {renderArrow('trade_price')}</th>
-            <th onClick={() => handleSort('change_price')}>전일대비 {renderArrow('change_price')}</th>
+            <th onClick={() => handleSort('change_rate')}>전일대비 {renderArrow('change_rate')}</th>
             <th onClick={() => handleSort('acc_trade_price_24h')}>거래대금 {renderArrow('acc_trade_price_24h')}</th>
           </tr>
         </thead>

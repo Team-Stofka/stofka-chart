@@ -2,3 +2,10 @@
   width: 100%;
   height: 100%;
 }
+.interval-select select {
+  background-color: #ffffff;
+  color: #666666;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
