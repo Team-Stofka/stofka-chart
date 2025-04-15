@@ -6,24 +6,48 @@ import {
     UTCTimestamp,
     CandlestickData,
 } from 'lightweight-charts';
-
 import ResizeObserver from 'resize-observer-polyfill';
 import './ChartArea.css';
 
 interface ChartAreaProps {
-  code: string; // 선택된 종목 코드 전달
+  code: string; // 선택된 종목 코드
 }
 
 const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
-  const chartContainerRef = useRef<HTMLDivElement>(null); // 차트 DOM 참조
-  const chartRef = useRef<IChartApi | null>(null); // 차트 인스턴스 참조
-  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null); // 캔들 시리즈 참조
-  const [interval, setInterval] = useState('1s'); // 선택된 봉 간격 상태
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const [interval, setInterval] = useState('1s');
+
+  // ✅ 초기 캔들 데이터를 요청하여 차트에 세팅하는 함수
+  const fetchInitialCandles = async () => {
+    try {
+      const response = await fetch(`/candles?code=${code}&interval=${interval}&count=150`);
+      const data = await response.json();
+
+      const parsedData: CandlestickData[] = data.map((item: any) => {
+        const time: UTCTimestamp = interval === '1s'
+          ? Math.floor(item.id.timestamp / 1000) as UTCTimestamp
+          : Math.floor(new Date(item.candleTime).getTime() / 1000) as UTCTimestamp;
+
+        return {
+          time,
+          open: item.openingPrice,
+          high: item.highPrice,
+          low: item.lowPrice,
+          close: item.tradePrice,
+        };
+      }).reverse();
+
+      seriesRef.current?.setData(parsedData);
+    } catch (error) {
+      console.error('[ChartArea] 초기 캔들 요청 실패:', error);
+    }
+  };
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // 1. 차트 생성
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: 400,
@@ -37,13 +61,12 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
       },
       timeScale: {
         timeVisible: true,
-        secondsVisible: true,
+        secondsVisible: interval === '1s',
       },
     });
 
     chartRef.current = chart;
 
-    // 2. 캔들 시리즈 추가
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#e53935',
       downColor: '#2196f3',
@@ -54,16 +77,18 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
 
     seriesRef.current = candlestickSeries;
 
-    // 3. 리사이즈 감지하여 차트 크기 조정
+    // ✅ 초기 캔들 로딩
+    fetchInitialCandles();
+
+    // ✅ Resize Observer
     const resizeObserver = new ResizeObserver(() => {
       chart.applyOptions({
         width: chartContainerRef.current!.clientWidth,
       });
     });
-
     resizeObserver.observe(chartContainerRef.current!);
 
-    // 4. interval에 따라 적절한 SSE 연결
+    // ✅ SSE 연결 (interval에 따라 endpoint 분기)
     const url = interval === '1s'
       ? `/stream/candle?code=${code}`
       : `/sse/connect?code=${code}`;
@@ -75,13 +100,14 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
         const { payload } = JSON.parse(event.data);
 
         if (payload.code !== code) return;
-
-        // interval이 1s가 아닌 경우, type 체크 (예: candle.1m, candle.3m ...)
         if (interval !== '1s' && payload.type !== `candle.${interval}`) return;
 
-        const ts = Math.floor(new Date(payload.timestamp).getTime() / 1000) as UTCTimestamp;
+        const ts = interval === '1s'
+          ? Math.floor(payload.timestamp / 1000)
+          : Math.floor(new Date(payload.timestamp).getTime() / 1000);
+
         const candle: CandlestickData = {
-          time: ts,
+          time: ts as UTCTimestamp,
           open: payload.opening_price,
           high: payload.high_price,
           low: payload.low_price,
@@ -107,7 +133,6 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
 
   return (
     <div>
-      {/* 봉 간격 선택 드롭다운 */}
       <div className="interval-select">
         <select value={interval} onChange={(e) => setInterval(e.target.value)}>
           <option value="1s">초</option>
@@ -122,8 +147,6 @@ const ChartArea: React.FC<ChartAreaProps> = ({ code }) => {
           <option value="1d">1일</option>
         </select>
       </div>
-
-      {/* 차트 컨테이너 */}
       <div ref={chartContainerRef} className="chart-container" />
     </div>
   );
